@@ -1,0 +1,1456 @@
+---
+title: "Data Analysis for Nike"
+output:
+  html_document:
+    theme: readable
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, results="hide", fig.show="asis", message=FALSE, warning=TRUE, error=TRUE)
+```
+
+```{r}
+# loads packages
+library(readr)
+library(dplyr)
+library(car)
+library(nnet)
+library(emmeans)
+```
+
+```{r}
+# loads data sets
+dat_in_market<-read_csv("In_Market_Data_Recoded.csv")
+dat_recent_buyer<-read_csv("Recent_Buyer_Data_Recoded.csv")
+```
+
+```{r}
+# recoding variables
+
+## recodes variables for In Market
+
+### the following variables are recoded to 1 and 0
+
+list_in_market_recode_binary<-c("where_run_1",	"where_run_2", "where_run_3",	"where_run_4", "why_run_1",	"why_run_2",	"why_run_3",	"why_run_4",	"why_run_5",	"why_run_6",	"why_run_7",	"why_run_8",	"why_run_9",	"why_run_10",	"why_run_11",	"why_run_12",	"why_run_13",	"why_run_14",	"why_run_15", "interest_buy_shoes_1",	"interest_buy_shoes_2",	"interest_buy_shoes_3",	"interest_buy_shoes_4",	"interest_buy_shoes_5", "difference_running_shoes_trainers_1",	"difference_running_shoes_trainers_2",	"difference_running_shoes_trainers_3",	"difference_running_shoes_trainers_4",	"difference_running_shoes_trainers_5",	"difference_running_shoes_trainers_6",	"difference_running_shoes_trainers_7",	"difference_running_shoes_trainers_8", "more_confident_if_1",	"more_confident_if_2",	"more_confident_if_3",	"more_confident_if_4",	"more_confident_if_5",	"more_confident_if_6",	"more_confident_if_7",	"more_confident_if_8",	"more_confident_if_9", "most_important_choosing_1",	 "most_important_choosing_2",	 "most_important_choosing_3",	 "most_important_choosing_4",	 "most_important_choosing_5",	 "most_important_choosing_6",	 "most_important_choosing_7",	 "most_important_choosing_8",	 "most_important_choosing_9",	 "most_important_choosing_10")
+
+dat_in_market<-dat_in_market %>% mutate_at(.vars=vars(list_in_market_recode_binary), .funs=list(~ifelse(is.na(.), 0,1))) %>% mutate_at(.vars=vars(list_in_market_recode_binary), .funs=list(~as.factor(.)))
+
+### the following variables are recoded to Likert Scales (1-5), with 5 being "Totally Agree" and 1 being "Not Agree At all"
+
+list_in_market_recode_likert<-c("difference_easy_to_tell", "confidence_right_shoes", "know_which_features", "too_expensive", "is_a_hassle", "need_expert_advice", "benefits_over_trainers")
+
+dat_in_market<-dat_in_market %>% mutate_at(.vars=vars(list_in_market_recode_likert), .funs=list(~dplyr::recode(., "Totally Agree"="5", "Agree"="4", "Neither agree nor disagree"="3", "Disagree"="2", "not agree at all"="1"))) %>% mutate_at(.vars=vars(list_in_market_recode_likert), .funs=list(~as.numeric(.)))
+
+## recodes variables for Recent Buyers
+
+### the following variables are recoded to 1 and 0
+
+list_recent_buyer_recode_binary<-c("where_run_1",	"where_run_2", "where_run_3",	"where_run_4", "why_run_1",	"why_run_2",	"why_run_3",	"why_run_4",	"why_run_5",	"why_run_6",	"why_run_7",	"why_run_8",	"why_run_9",	"why_run_10",	"why_run_11",	"why_run_12",	"why_run_13",	"why_run_14",	"why_run_15", "interest_buy_shoes_1",	"interest_buy_shoes_2",	"interest_buy_shoes_3",	"interest_buy_shoes_4",	"interest_buy_shoes_5", "online_search_1",	"online_search_2",	"online_search_3",	"online_search_4",	"online_search_5", "most_important_choosing_1",	 "most_important_choosing_2",	 "most_important_choosing_3",	 "most_important_choosing_4",	 "most_important_choosing_5",	 "most_important_choosing_6",	 "most_important_choosing_7",	 "most_important_choosing_8",	 "most_important_choosing_9",	 "most_important_choosing_10", "more_confident_if_1",	"more_confident_if_2",	"more_confident_if_3",	"more_confident_if_4",	"more_confident_if_5",	"more_confident_if_6",	"more_confident_if_7",	"more_confident_if_8",	"more_confident_if_9", "most_frustrating_online_1",	"most_frustrating_online_2",	"most_frustrating_online_3",	"most_frustrating_online_4",	"most_frustrating_online_5",	"most_frustrating_online_6",	"most_frustrating_online_7", "most_frustrating_online_8",	"most_frustrating_online_9",	"most_frustrating_online_10", "most_frustrating_offline_1",	"most_frustrating_offline_2",	"most_frustrating_offline_3",	"most_frustrating_offline_4",	"most_frustrating_offline_5",	"most_frustrating_offline_6",	"most_frustrating_offline_7",	"most_frustrating_offline_8",	"most_frustrating_offline_9",	"most_frustrating_offline_10",	"most_frustrating_offline_11",	"most_frustrating_offline_12")
+
+dat_recent_buyer<-dat_recent_buyer %>% mutate_at(.vars=vars(list_recent_buyer_recode_binary), .funs=list(~ifelse(is.na(.), 0,1))) %>% mutate_at(.vars=vars(list_recent_buyer_recode_binary), .funs=list(~as.factor(.)))
+
+### the following variables are recoded to Likert Scales (1-5), with 5 being "Totally Agree" and 1 being "Not Agree At all"
+
+list_recent_buyer_recode_likert<-c("confidence_right_shoes", "need_expert_advice")
+
+dat_recent_buyer<-dat_recent_buyer %>% mutate_at(.vars=vars(list_recent_buyer_recode_likert), .funs=list(~dplyr::recode(., "Strongly Agree"="5", "Agree"="4", "Neither agree nor disagree"="3", "Disagree"="2", "Strongly Disagree"="1"))) %>% mutate_at(.vars=vars(list_recent_buyer_recode_likert), .funs=list(~as.numeric(.)))
+```
+
+```{r}
+# combines data sets by shared variables
+
+dat_in_market<-dat_in_market %>% mutate(source="In Market") %>% rename(spending=expected_spending)
+
+dat_recent_buyer<-dat_recent_buyer %>% mutate(source="Recent Buyer") %>% rename(spending=recent_spending)
+
+list_shared_variables<-c("Segment", "Sex", "run_frequency", "where_run_1",	"where_run_2", "where_run_3",	"where_run_4", "running_experience", "why_run_1",	"why_run_2",	"why_run_3",	"why_run_4",	"why_run_5",	"why_run_6",	"why_run_7",	"why_run_8",	"why_run_9",	"why_run_10",	"why_run_11",	"why_run_12",	"why_run_13",	"why_run_14",	"why_run_15", "interest_buy_shoes_1",	"interest_buy_shoes_2",	"interest_buy_shoes_3",	"interest_buy_shoes_4",	"interest_buy_shoes_5", "interest_buy_shoes_6", "three_words_1", "three_words_2", "three_words_3", "spending", "confidence_right_shoes", "more_confident_if_1",	"more_confident_if_2",	"more_confident_if_3",	"more_confident_if_4",	"more_confident_if_5",	"more_confident_if_6",	"more_confident_if_7",	"more_confident_if_8",	"more_confident_if_9", "most_important_choosing_1",	 "most_important_choosing_2",	 "most_important_choosing_3",	 "most_important_choosing_4",	 "most_important_choosing_5",	 "most_important_choosing_6",	 "most_important_choosing_7",	 "most_important_choosing_8",	 "most_important_choosing_9",	 "most_important_choosing_10", "need_expert_advice", "source")
+
+d1<-dat_in_market %>% select(list_shared_variables)
+d2<-dat_recent_buyer %>% select(list_shared_variables)
+
+dat_combined<-merge(d1, d2, by=names(d1), all=TRUE)
+
+dat_combined<-dat_combined %>% mutate(source=as.factor(source))
+```
+
+```{r}
+# makes more variables into factors
+
+dat_in_market<-dat_in_market %>% mutate_at(.vars=vars(c("Sex", "running_experience", "Segment")), .funs=list(~as.factor(.)))
+
+dat_recent_buyer<-dat_recent_buyer %>% mutate_at(.vars=vars(c("Sex", "running_experience", "Segment")), .funs=list(~as.factor(.)))
+
+dat_combined<-dat_combined %>% mutate_at(.vars=vars(c("Sex", "running_experience", "Segment")), .funs=list(~as.factor(.)))
+
+# contrast coding
+
+contrasts(dat_combined$source)<-cbind(Recent_Buyer=c(-1, 1))
+
+contrasts(dat_in_market$Sex)<-cbind(Male=c(-1, 1))
+contrasts(dat_recent_buyer$Sex)<-cbind(Male=c(-1, 1))
+contrasts(dat_combined$Sex)<-cbind(Male=c(-1, 1))
+
+contrasts(dat_in_market$running_experience)<-cbind(Advanced_rest=c(2, -1, -1), Beginner_Intermediate=c(0, 1, -1))
+
+contrasts(dat_recent_buyer$running_experience)<-cbind(Advanced_rest=c(2, -1, -1), Beginner_Intermediate=c(0, 1, -1))
+
+contrasts(dat_combined$running_experience)<-cbind(Advanced_rest=c(2, -1, -1), Beginner_Intermediate=c(0, 1, -1))
+```
+
+All analyses on running experience controlled for gender (and sample source, i.e. In Market vs Recent Buyers, whenever possible).
+
+## Hypothesis 1
+
+Skills: Consumers find it hard to distinguish between lifestyle and performance products
+
+```{r}
+# DV: difference_easy_to_tell (In Market only), difference_running_shoes_trainers_(8) (In Market only)
+
+# IV: 
+
+lm_H1_difference_gender<-lm(difference_easy_to_tell~Sex, data=dat_in_market)
+summary(lm_H1_difference_gender)
+
+lm_H1_difference_gender_segment<-lm(difference_easy_to_tell~Sex+Segment, data=dat_in_market)
+Anova(lm_H1_difference_gender_segment, type=3)
+
+lm_H1_difference_gender_segment_interaction<-lm(difference_easy_to_tell~Sex*Segment, data=dat_in_market)
+Anova(lm_H1_difference_gender_segment_interaction, type=3)
+
+lm_H1_difference_disagree_gender<-lm(difference_easy_to_tell~Sex, data=dat_in_market %>% filter(difference_easy_to_tell<=3))
+summary(lm_H1_difference_disagree_gender)
+
+lm_H1_difference_gender_experience<-lm(difference_easy_to_tell~Sex+running_experience, data=dat_in_market)
+Anova(lm_H1_difference_gender_experience, type=3)
+
+pairs(emmeans(lm_H1_difference_gender_experience, ~running_experience))
+
+##########
+
+glm_H1_difference_1_gender<-glm(difference_running_shoes_trainers_1~Sex, data=dat_in_market, family=binomial)
+summary(glm_H1_difference_1_gender)
+
+glm_H1_difference_2_gender<-glm(difference_running_shoes_trainers_2~Sex, data=dat_in_market, family=binomial)
+summary(glm_H1_difference_2_gender)
+
+glm_H1_difference_3_gender<-glm(difference_running_shoes_trainers_3~Sex, data=dat_in_market, family=binomial)
+summary(glm_H1_difference_3_gender)
+
+glm_H1_difference_4_gender<-glm(difference_running_shoes_trainers_4~Sex, data=dat_in_market, family=binomial)
+summary(glm_H1_difference_4_gender) # ***
+
+glm_H1_difference_5_gender<-glm(difference_running_shoes_trainers_5~Sex, data=dat_in_market, family=binomial)
+summary(glm_H1_difference_5_gender) # **
+
+glm_H1_difference_6_gender<-glm(difference_running_shoes_trainers_6~Sex, data=dat_in_market, family=binomial)
+summary(glm_H1_difference_6_gender) 
+
+glm_H1_difference_7_gender<-glm(difference_running_shoes_trainers_7~Sex, data=dat_in_market, family=binomial)
+summary(glm_H1_difference_7_gender) 
+
+glm_H1_difference_8_gender<-glm(difference_running_shoes_trainers_8~Sex, data=dat_in_market, family=binomial)
+summary(glm_H1_difference_8_gender) # **
+
+glm_H1_difference_1_gender_experience<-glm(difference_running_shoes_trainers_1~Sex+running_experience, data=dat_in_market, family=binomial)
+summary(glm_H1_difference_1_gender_experience)
+
+glm_H1_difference_2_gender_experience<-glm(difference_running_shoes_trainers_2~Sex+running_experience, data=dat_in_market, family=binomial)
+summary(glm_H1_difference_2_gender_experience)
+
+Anova(glm_H1_difference_2_gender_experience, type=3)
+pairs(emmeans(glm_H1_difference_2_gender_experience, ~running_experience))
+
+glm_H1_difference_3_gender_experience<-glm(difference_running_shoes_trainers_3~Sex+running_experience, data=dat_in_market, family=binomial)
+summary(glm_H1_difference_3_gender_experience)
+
+glm_H1_difference_4_gender_experience<-glm(difference_running_shoes_trainers_4~Sex+running_experience, data=dat_in_market, family=binomial)
+summary(glm_H1_difference_4_gender_experience)
+
+Anova(glm_H1_difference_4_gender_experience, type=3)
+pairs(emmeans(glm_H1_difference_4_gender_experience, ~running_experience))
+
+glm_H1_difference_5_gender_experience<-glm(difference_running_shoes_trainers_5~Sex+running_experience, data=dat_in_market, family=binomial)
+summary(glm_H1_difference_5_gender_experience) 
+
+glm_H1_difference_6_gender_experience<-glm(difference_running_shoes_trainers_6~Sex+running_experience, data=dat_in_market, family=binomial)
+summary(glm_H1_difference_6_gender_experience) 
+
+glm_H1_difference_7_gender_experience<-glm(difference_running_shoes_trainers_7~Sex+running_experience, data=dat_in_market, family=binomial)
+summary(glm_H1_difference_7_gender_experience)
+
+Anova(glm_H1_difference_7_gender_experience, type=3)
+pairs(emmeans(glm_H1_difference_7_gender_experience, ~running_experience))
+
+glm_H1_difference_8_gender_experience<-glm(difference_running_shoes_trainers_8~Sex+running_experience, data=dat_in_market, family=binomial)
+summary(glm_H1_difference_8_gender_experience)
+
+Anova(glm_H1_difference_8_gender_experience, type=3)
+pairs(emmeans(glm_H1_difference_8_gender_experience, ~running_experience))
+
+```
+
+```{r, results="markup"}
+# results from this chunk will be printed
+Anova(lm_H1_difference_gender_experience, type=3)
+pairs(emmeans(lm_H1_difference_gender_experience, ~running_experience))
+```
+
+The above shows that whether the difference between running shoes and other sports shoes is easy to tell depends on running experience. Both Advanced and Intermediate runners found it easier to tell than Beginners, but no difference was found between Advanced and Intermediate runners.
+
+```{r, results="markup"}
+# results from this chunk will be printed
+Anova(glm_H1_difference_2_gender_experience, type=3)
+pairs(emmeans(glm_H1_difference_2_gender_experience, ~running_experience))
+
+Anova(glm_H1_difference_4_gender_experience, type=3)
+pairs(emmeans(glm_H1_difference_4_gender_experience, ~running_experience))
+
+Anova(glm_H1_difference_7_gender_experience, type=3)
+pairs(emmeans(glm_H1_difference_7_gender_experience, ~running_experience))
+
+Anova(glm_H1_difference_8_gender_experience, type=3)
+pairs(emmeans(glm_H1_difference_8_gender_experience, ~running_experience))
+```
+
+When asked "How do running shoes differ from other trainers?", running experience does play a role in how participants responded.
+
+For #2 "Colour Options", Advanced runners were less likely to pick this option than Beginners.
+
+For #4 "Technology", both Advanced and Intermediate runners were more likely to pick this option than Beginners, but no difference was found between Advanced and Intermediate runners.
+
+For #7 "Benefits (e.g. speed, motion, comfort)", Advanced runners were more likely to pick this option than both Intermediate runners and Beginners. No difference between Intermediate runners and Beginners.
+
+For #8 "I'm not sure", both Advanced and Intermediate runners were less likely to pick this option than Beginners. No difference between Advanced and Intermediate runners.
+
+## Hypothesis 2
+
+Confidence: Consumers don't feel confident choosing performance products
+
+```{r}
+# DV: confidence_right_shoes, more_confident_if_(9)
+
+# IV: source
+
+lm_H2_confidence_source<-lm(confidence_right_shoes~source, dat_combined)
+summary(lm_H2_confidence_source)
+
+lm_H2_confidence_source_gender<-lm(confidence_right_shoes~source+Sex, dat_combined)
+summary(lm_H2_confidence_source_gender)
+
+lm_H2_confidence_source_gender_interaction<-lm(confidence_right_shoes~source*Sex, dat_combined)
+summary(lm_H2_confidence_source_gender_interaction)
+
+lm_H2_confidence_source_gender_experience<-lm(confidence_right_shoes~source+Sex+running_experience, dat_combined)
+summary(lm_H2_confidence_source_gender_experience)
+
+Anova(lm_H2_confidence_source_gender_experience, type=3)
+pairs(emmeans(lm_H2_confidence_source_gender_experience, ~running_experience))
+
+##########
+
+glm_H2_more_confident_if_1_source<-glm(more_confident_if_1~source, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_1_source) # ***
+
+glm_H2_more_confident_if_2_source<-glm(more_confident_if_2~source, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_2_source) # ***
+
+glm_H2_more_confident_if_3_source<-glm(more_confident_if_3~source, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_3_source) # ***
+
+glm_H2_more_confident_if_4_source<-glm(more_confident_if_4~source, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_4_source) # *
+
+glm_H2_more_confident_if_5_source<-glm(more_confident_if_5~source, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_5_source) # ***
+
+glm_H2_more_confident_if_6_source<-glm(more_confident_if_6~source, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_6_source)
+
+glm_H2_more_confident_if_7_source<-glm(more_confident_if_7~source, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_7_source) # ***
+
+glm_H2_more_confident_if_8_source<-glm(more_confident_if_8~source, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_8_source)
+
+glm_H2_more_confident_if_9_source<-glm(more_confident_if_9~source, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_9_source) # ***
+
+## Gender
+
+glm_H2_more_confident_if_1_Sex<-glm(more_confident_if_1~Sex, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_1_Sex)
+
+glm_H2_more_confident_if_2_Sex<-glm(more_confident_if_2~Sex, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_2_Sex) 
+
+glm_H2_more_confident_if_3_Sex<-glm(more_confident_if_3~Sex, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_3_Sex)
+
+glm_H2_more_confident_if_4_Sex<-glm(more_confident_if_4~Sex, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_4_Sex) # **
+
+glm_H2_more_confident_if_5_Sex<-glm(more_confident_if_5~Sex, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_5_Sex) 
+
+glm_H2_more_confident_if_6_Sex<-glm(more_confident_if_6~Sex, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_6_Sex)
+
+glm_H2_more_confident_if_7_Sex<-glm(more_confident_if_7~Sex, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_7_Sex) 
+
+glm_H2_more_confident_if_8_Sex<-glm(more_confident_if_8~Sex, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_8_Sex)
+
+glm_H2_more_confident_if_9_Sex<-glm(more_confident_if_9~Sex, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_9_Sex) # ***
+
+##########
+
+glm_H2_more_confident_if_1_experience<-glm(more_confident_if_1~source+Sex+running_experience, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_1_experience)
+
+Anova(glm_H2_more_confident_if_1_experience, type=3)
+pairs(emmeans(glm_H2_more_confident_if_1_experience, ~running_experience))
+
+glm_H2_more_confident_if_2_experience<-glm(more_confident_if_2~source+Sex+running_experience, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_2_experience)
+
+Anova(glm_H2_more_confident_if_2_experience, type=3)
+pairs(emmeans(glm_H2_more_confident_if_2_experience, ~running_experience))
+
+glm_H2_more_confident_if_3_experience<-glm(more_confident_if_3~source+Sex+running_experience, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_3_experience)
+
+glm_H2_more_confident_if_4_experience<-glm(more_confident_if_4~source+Sex+running_experience, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_4_experience)
+
+Anova(glm_H2_more_confident_if_4_experience, type=3)
+pairs(emmeans(glm_H2_more_confident_if_4_experience, ~running_experience))
+
+glm_H2_more_confident_if_5_experience<-glm(more_confident_if_5~source+Sex+running_experience, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_5_experience)
+
+glm_H2_more_confident_if_6_experience<-glm(more_confident_if_6~source+Sex+running_experience, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_6_experience)
+
+Anova(glm_H2_more_confident_if_6_experience, type=3)
+pairs(emmeans(glm_H2_more_confident_if_6_experience, ~running_experience))
+
+glm_H2_more_confident_if_7_experience<-glm(more_confident_if_7~source+Sex+running_experience, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_7_experience)
+
+glm_H2_more_confident_if_8_experience<-glm(more_confident_if_8~source+Sex+running_experience, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_8_experience)
+
+glm_H2_more_confident_if_9_experience<-glm(more_confident_if_9~source+Sex+running_experience, data=dat_combined, family=binomial)
+summary(glm_H2_more_confident_if_9_experience)
+
+Anova(glm_H2_more_confident_if_9_experience, type=3)
+pairs(emmeans(glm_H2_more_confident_if_9_experience, ~running_experience))
+
+```
+
+```{r, results="markup"}
+# results from this chunk will be printed
+Anova(lm_H2_confidence_source_gender_experience, type=3)
+pairs(emmeans(lm_H2_confidence_source_gender_experience, ~running_experience))
+```
+
+The above shows that Advanced runners felt more confident choosing the right running shoes than Intermediate runners, who in turn felt more confident choosing the right running shoes than Beginners (i.e. an ordinal effect).
+
+```{r, results="markup"}
+# results from this chunk will be printed
+Anova(glm_H2_more_confident_if_1_experience, type=3)
+pairs(emmeans(glm_H2_more_confident_if_1_experience, ~running_experience))
+
+Anova(glm_H2_more_confident_if_2_experience, type=3)
+pairs(emmeans(glm_H2_more_confident_if_2_experience, ~running_experience))
+
+Anova(glm_H2_more_confident_if_4_experience, type=3)
+pairs(emmeans(glm_H2_more_confident_if_4_experience, ~running_experience))
+
+Anova(glm_H2_more_confident_if_6_experience, type=3)
+pairs(emmeans(glm_H2_more_confident_if_6_experience, ~running_experience))
+
+Anova(glm_H2_more_confident_if_9_experience, type=3)
+pairs(emmeans(glm_H2_more_confident_if_9_experience, ~running_experience))
+```
+
+When asked "I would feel more confident buying running shoes if ___", running experience plays a role in the following options.
+
+For #1 "I saw them endorsed by a respected professional", Advanced runners were more likely to choose this option than beginners, but no other difference was found.
+
+For #2 "I knew I was getting good value for money", Advanced runners were less likely to choose this option than both Beginners and Intermediate runners, while Intermediate runners were also less likely to choose this option than Beginners.
+
+For #4 "I had a positive experience buying these from the brand previously", advanced runners were more likely to choose this option than other two groups, while Intermediate runners were also more likely to choose this option than Beginners.
+
+For #6 "I saw advertising / promotions / customer reviews", Beginners were more likely to choose this option than Intermediate runners. No other difference was found.
+
+For #9 "I knew they were the best pair to help me achieve my goals", Advanced runners were more likely to choose this option than the other two groups, while Intermediate runners were also more likely to choose this option than Beginners.
+
+## Hypothesis 3
+
+Knowledge: Consumers don't know what product features they should focus on to address their needs
+
+```{r}
+# DV: know_which_features (In Market only), most_important_choosing_(10)
+
+# IV: source
+
+lm_knowledge_gender<-lm(know_which_features~Sex, data=dat_in_market)
+summary(lm_knowledge_gender)
+
+lm_knowledge_gender_Segment<-lm(know_which_features~Sex+Segment, data=dat_in_market)
+Anova(lm_knowledge_gender_Segment)
+
+lm_knowledge_disagree_gender<-lm(know_which_features~Sex, data=dat_in_market %>% filter(know_which_features<=3))
+summary(lm_knowledge_disagree_gender)
+
+lm_knowledge_gender_experience<-lm(know_which_features~Sex+running_experience, data=dat_in_market)
+summary(lm_knowledge_gender_experience)
+
+Anova(lm_knowledge_gender_experience, type=3)
+pairs(emmeans(lm_knowledge_gender_experience, ~running_experience))
+
+##########
+
+glm_H3_most_important_1_gender<-glm(most_important_choosing_1~Sex, data=dat_in_market, family=binomial)
+summary(glm_H3_most_important_1_gender) # *
+
+glm_H3_most_important_2_gender<-glm(most_important_choosing_2~Sex, data=dat_in_market, family=binomial)
+summary(glm_H3_most_important_2_gender)
+
+glm_H3_most_important_3_gender<-glm(most_important_choosing_3~Sex, data=dat_in_market, family=binomial)
+summary(glm_H3_most_important_3_gender)
+
+glm_H3_most_important_4_gender<-glm(most_important_choosing_4~Sex, data=dat_in_market, family=binomial)
+summary(glm_H3_most_important_4_gender)
+
+glm_H3_most_important_5_gender<-glm(most_important_choosing_5~Sex, data=dat_in_market, family=binomial)
+summary(glm_H3_most_important_5_gender) # ***
+
+glm_H3_most_important_6_gender<-glm(most_important_choosing_6~Sex, data=dat_in_market, family=binomial)
+summary(glm_H3_most_important_6_gender) # ***
+
+glm_H3_most_important_7_gender<-glm(most_important_choosing_7~Sex, data=dat_in_market, family=binomial)
+summary(glm_H3_most_important_7_gender) # *
+
+glm_H3_most_important_8_gender<-glm(most_important_choosing_8~Sex, data=dat_in_market, family=binomial)
+summary(glm_H3_most_important_8_gender)
+
+glm_H3_most_important_9_gender<-glm(most_important_choosing_9~Sex, data=dat_in_market, family=binomial)
+summary(glm_H3_most_important_9_gender)
+
+glm_H3_most_important_10_gender<-glm(most_important_choosing_10~Sex, data=dat_in_market, family=binomial)
+summary(glm_H3_most_important_10_gender)
+
+glm_H3_most_important_1_gender_experience<-glm(most_important_choosing_1~Sex+running_experience, data=dat_in_market, family=binomial)
+summary(glm_H3_most_important_1_gender_experience)
+
+glm_H3_most_important_2_gender_experience<-glm(most_important_choosing_2~Sex+running_experience, data=dat_in_market, family=binomial)
+summary(glm_H3_most_important_2_gender_experience)
+
+glm_H3_most_important_3_gender_experience<-glm(most_important_choosing_3~Sex+running_experience, data=dat_in_market, family=binomial)
+summary(glm_H3_most_important_3_gender_experience)
+
+glm_H3_most_important_4_gender_experience<-glm(most_important_choosing_4~Sex+running_experience, data=dat_in_market, family=binomial)
+summary(glm_H3_most_important_4_gender_experience)
+
+Anova(glm_H3_most_important_4_gender_experience, type=3)
+pairs(emmeans(glm_H3_most_important_4_gender_experience, ~running_experience))
+
+glm_H3_most_important_5_gender_experience<-glm(most_important_choosing_5~Sex+running_experience, data=dat_in_market, family=binomial)
+summary(glm_H3_most_important_5_gender_experience)
+
+Anova(glm_H3_most_important_5_gender_experience, type=3)
+pairs(emmeans(glm_H3_most_important_5_gender_experience, ~running_experience))
+
+glm_H3_most_important_6_gender_experience<-glm(most_important_choosing_6~Sex+running_experience, data=dat_in_market, family=binomial)
+summary(glm_H3_most_important_6_gender_experience)
+
+Anova(glm_H3_most_important_6_gender_experience, type=3)
+pairs(emmeans(glm_H3_most_important_6_gender_experience, ~running_experience))
+
+glm_H3_most_important_7_gender_experience<-glm(most_important_choosing_7~Sex+running_experience, data=dat_in_market, family=binomial)
+summary(glm_H3_most_important_7_gender_experience)
+
+Anova(glm_H3_most_important_7_gender_experience, type=3)
+pairs(emmeans(glm_H3_most_important_7_gender_experience, ~running_experience))
+
+glm_H3_most_important_8_gender_experience<-glm(most_important_choosing_8~Sex+running_experience, data=dat_in_market, family=binomial)
+summary(glm_H3_most_important_8_gender_experience)
+
+Anova(glm_H3_most_important_8_gender_experience, type=3)
+pairs(emmeans(glm_H3_most_important_8_gender_experience, ~running_experience))
+
+glm_H3_most_important_9_gender_experience<-glm(most_important_choosing_9~Sex+running_experience, data=dat_in_market, family=binomial)
+summary(glm_H3_most_important_9_gender_experience)
+
+glm_H3_most_important_10_gender_experience<-glm(most_important_choosing_10~Sex+running_experience, data=dat_in_market, family=binomial)
+summary(glm_H3_most_important_10_gender_experience)
+
+Anova(glm_H3_most_important_10_gender_experience, type=3)
+pairs(emmeans(glm_H3_most_important_10_gender_experience, ~running_experience))
+
+```
+
+```{r, results="markup"}
+# results from this chunk will be printed
+Anova(lm_knowledge_gender_experience, type=3)
+pairs(emmeans(lm_knowledge_gender_experience, ~running_experience))
+```
+
+Advanced runners were more likely to know which product features to look at on when choosing running shoes than both of the remaining groups, while Intermediate runners were also more likely to respond more positively in this question than Beginners (an ordinal effect).
+
+```{r, results="markup"}
+# results from this chunk will be printed
+Anova(glm_H3_most_important_4_gender_experience, type=3)
+pairs(emmeans(glm_H3_most_important_4_gender_experience, ~running_experience))
+
+Anova(glm_H3_most_important_5_gender_experience, type=3)
+pairs(emmeans(glm_H3_most_important_5_gender_experience, ~running_experience))
+
+Anova(glm_H3_most_important_6_gender_experience, type=3)
+pairs(emmeans(glm_H3_most_important_6_gender_experience, ~running_experience))
+
+Anova(glm_H3_most_important_7_gender_experience, type=3)
+pairs(emmeans(glm_H3_most_important_7_gender_experience, ~running_experience))
+
+Anova(glm_H3_most_important_8_gender_experience, type=3)
+pairs(emmeans(glm_H3_most_important_8_gender_experience, ~running_experience))
+
+Anova(glm_H3_most_important_10_gender_experience, type=3)
+pairs(emmeans(glm_H3_most_important_10_gender_experience, ~running_experience))
+```
+
+When asked "The most important things to me when choosing a running shoe are ___", running experience plays a role in how participants responded.
+
+For #4 "Shock absorption", (perhaps surprisingly) Advanced runners were less likely to pick this option than the other two groups (it could be due to participants were restricted to pick only 3 options, so Advanced runners picked something else instead). No differences between Intermediate runners and Beginners.
+
+For #5 "Lightweight", Advanced runners were more likely to select this option than the other two groups, while Intermediate runners were also more likely to select this option than Beginners.
+
+For #6 "Maintenance / anti-pronation", Beginners were more likely to pick this option than the other two groups. No other differences.
+
+For #7 "Bounce and cushioning", both Advanced and Intermediate runners were more likely to pick this option than Beginners. A difference between Advanced and Intermediate runners exists but is only marginally significant (with Advanced runners being more likely).
+
+For #8 "Price", Beginners were more likely to pick this option than Advanced runners. No other differences.
+
+For #10 "Specialised to surface", Advanced runners were more likely to pick this option than Beginners. No other differences.
+
+
+## Hypothesis 4
+
+Resources: Consumers don't think they can afford performance products
+
+```{r}
+# DV: too_expensive (In Market only)
+
+# IV: 
+lm_H4_expensive_gender<-lm(too_expensive~Sex, data=dat_in_market)
+summary(lm_H4_expensive_gender)
+
+lm_H4_expensive_gender_segment<-lm(too_expensive~Sex+Segment, data=dat_in_market)
+Anova(lm_H4_expensive_gender_segment)
+
+lm_H4_expensive_gender_experience<-lm(too_expensive~Sex+running_experience, data=dat_in_market)
+summary(lm_H4_expensive_gender_experience)
+
+Anova(lm_H4_expensive_gender_experience, type=3)
+pairs(emmeans(lm_H4_expensive_gender_experience, ~running_experience))
+
+##########
+
+multi_spending_source<-multinom(spending~source, dat=dat_combined)
+Anova(multi_spending_source)
+
+dat_combined<-dat_combined %>% mutate(spending_recoded=ifelse(grepl("<50", spending) | grepl("Between 50 and 100", spending) , 0, 1))
+
+dat_combined<-dat_combined %>% mutate(spending_numeric=ifelse(grepl("<50", spending), 1, ifelse(grepl("Between 50", spending), 2, ifelse(grepl("Between 100", spending), 3, ifelse(grepl("Between 150", spending), 4, ifelse(grepl("Over 200", spending), 5, 0)))))) %>% mutate(spending_numeric=as.numeric(spending_numeric))
+
+glm_H4_spending_gender<-glm(spending_recoded~Sex, data=dat_combined, family=binomial)
+summary(glm_H4_spending_gender)
+
+glm_H4_spending_gender_source<-glm(spending_recoded~Sex+source, data=dat_combined, family=binomial)
+summary(glm_H4_spending_gender_source)
+
+glm_H4_spending_gender_source_interaction<-glm(spending_recoded~Sex*source, data=dat_combined, family=binomial)
+summary(glm_H4_spending_gender_source_interaction)
+
+lm_H4_spending_experience<-lm(spending_numeric~Sex+running_experience+source, data=dat_combined)
+summary(lm_H4_spending_experience)
+
+Anova(lm_H4_spending_experience, type=3)
+pairs(emmeans(lm_H4_spending_experience, ~running_experience))
+
+```
+
+```{r, results="markup"}
+# results from this chunk will be printed
+Anova(lm_H4_expensive_gender_experience, type=3)
+pairs(emmeans(lm_H4_expensive_gender_experience, ~running_experience))
+```
+
+The above shows that Beginners were more likely to think running shoes are too expensive for what they need than the other two groups, but no difference between Advanced and Intermediate runners.
+
+```{r, results="markup"}
+# results from this chunk will be printed
+Anova(lm_H4_spending_experience, type=3)
+pairs(emmeans(lm_H4_spending_experience, ~running_experience))
+```
+
+The above investigates expected/recent spending. Both Advanced and Intermediate runners reported a higher spending than Beginners, while Advanced runners also reported a higher spending than Intermediate runners (an ordinal effect).
+
+## Hypothesis 5
+
+Infrastructure: consumers find buying performance products inconvenient
+
+```{r}
+# DV: is_a_hassle (In Market only)
+
+# IV: 
+
+lm_H5_hassle_gender<-lm(is_a_hassle~Sex, data=dat_in_market)
+summary(lm_H5_hassle_gender)
+
+lm_H5_hassle_gender_experience<-lm(is_a_hassle~Sex+running_experience, data=dat_in_market)
+summary(lm_H5_hassle_gender_experience)
+
+Anova(lm_H5_hassle_gender_experience, type=3)
+pairs(emmeans(lm_H5_hassle_gender_experience, ~running_experience))
+
+##########
+
+glm_H5_most_frustrating_online_1_gender<-glm(most_frustrating_online_1~Sex, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_online_1_gender) # *
+
+glm_H5_most_frustrating_online_2_gender<-glm(most_frustrating_online_2~Sex, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_online_2_gender)
+
+glm_H5_most_frustrating_online_3_gender<-glm(most_frustrating_online_3~Sex, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_online_3_gender) # *
+
+glm_H5_most_frustrating_online_4_gender<-glm(most_frustrating_online_4~Sex, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_online_4_gender)
+
+glm_H5_most_frustrating_online_5_gender<-glm(most_frustrating_online_5~Sex, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_online_5_gender) # **
+
+glm_H5_most_frustrating_online_6_gender<-glm(most_frustrating_online_6~Sex, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_online_6_gender)
+
+glm_H5_most_frustrating_online_7_gender<-glm(most_frustrating_online_7~Sex, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_online_7_gender) # *
+
+glm_H5_most_frustrating_online_8_gender<-glm(most_frustrating_online_8~Sex, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_online_8_gender)
+
+glm_H5_most_frustrating_online_9_gender<-glm(most_frustrating_online_9~Sex, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_online_9_gender)
+
+glm_H5_most_frustrating_online_10_gender<-glm(most_frustrating_online_10~Sex, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_online_10_gender) # ***
+
+glm_H5_most_frustrating_online_1_gender_experience<-glm(most_frustrating_online_1~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_online_1_gender_experience)
+
+glm_H5_most_frustrating_online_2_gender_experience<-glm(most_frustrating_online_2~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_online_2_gender_experience)
+
+glm_H5_most_frustrating_online_3_gender_experience<-glm(most_frustrating_online_3~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_online_3_gender_experience)
+
+glm_H5_most_frustrating_online_4_gender_experience<-glm(most_frustrating_online_4~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_online_4_gender_experience)
+
+glm_H5_most_frustrating_online_5_gender_experience<-glm(most_frustrating_online_5~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_online_5_gender_experience)
+
+Anova(glm_H5_most_frustrating_online_5_gender_experience, type=3)
+pairs(emmeans(glm_H5_most_frustrating_online_5_gender_experience, ~running_experience))
+
+glm_H5_most_frustrating_online_6_gender_experience<-glm(most_frustrating_online_6~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_online_6_gender_experience)
+
+glm_H5_most_frustrating_online_7_gender_experience<-glm(most_frustrating_online_7~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_online_7_gender_experience)
+
+Anova(glm_H5_most_frustrating_online_7_gender_experience, type=3)
+pairs(emmeans(glm_H5_most_frustrating_online_7_gender_experience, ~running_experience))
+
+glm_H5_most_frustrating_online_8_gender_experience<-glm(most_frustrating_online_8~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_online_8_gender_experience)
+
+Anova(glm_H5_most_frustrating_online_8_gender_experience, type=3)
+pairs(emmeans(glm_H5_most_frustrating_online_8_gender_experience, ~running_experience))
+
+glm_H5_most_frustrating_online_9_gender_experience<-glm(most_frustrating_online_9~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_online_9_gender_experience)
+
+Anova(glm_H5_most_frustrating_online_9_gender_experience, type=3)
+pairs(emmeans(glm_H5_most_frustrating_online_9_gender_experience, ~running_experience))
+
+glm_H5_most_frustrating_online_10_gender_experience<-glm(most_frustrating_online_10~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_online_10_gender_experience)
+
+##########
+
+glm_H5_most_frustrating_offline_1_gender<-glm(most_frustrating_offline_1~Sex, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_offline_1_gender) 
+
+glm_H5_most_frustrating_offline_2_gender<-glm(most_frustrating_offline_2~Sex, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_offline_2_gender)
+
+glm_H5_most_frustrating_offline_3_gender<-glm(most_frustrating_offline_3~Sex, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_offline_3_gender) 
+
+glm_H5_most_frustrating_offline_4_gender<-glm(most_frustrating_offline_4~Sex, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_offline_4_gender)
+
+glm_H5_most_frustrating_offline_5_gender<-glm(most_frustrating_offline_5~Sex, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_offline_5_gender) 
+
+glm_H5_most_frustrating_offline_6_gender<-glm(most_frustrating_offline_6~Sex, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_offline_6_gender)
+
+glm_H5_most_frustrating_offline_7_gender<-glm(most_frustrating_offline_7~Sex, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_offline_7_gender)
+
+glm_H5_most_frustrating_offline_8_gender<-glm(most_frustrating_offline_8~Sex, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_offline_8_gender)
+
+glm_H5_most_frustrating_offline_9_gender<-glm(most_frustrating_offline_9~Sex, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_offline_9_gender)
+
+glm_H5_most_frustrating_offline_10_gender<-glm(most_frustrating_offline_10~Sex, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_offline_10_gender) 
+
+glm_H5_most_frustrating_offline_11_gender<-glm(most_frustrating_offline_11~Sex, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_offline_11_gender) 
+
+glm_H5_most_frustrating_offline_12_gender<-glm(most_frustrating_offline_12~Sex, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_offline_12_gender)
+
+glm_H5_most_frustrating_offline_1_gender_experience<-glm(most_frustrating_offline_1~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_offline_1_gender_experience)
+
+Anova(glm_H5_most_frustrating_offline_1_gender_experience, type=3)
+pairs(emmeans(glm_H5_most_frustrating_offline_1_gender_experience, ~running_experience))
+
+glm_H5_most_frustrating_offline_2_gender_experience<-glm(most_frustrating_offline_2~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_offline_2_gender_experience)
+
+glm_H5_most_frustrating_offline_3_gender_experience<-glm(most_frustrating_offline_3~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_offline_3_gender_experience) 
+
+glm_H5_most_frustrating_offline_4_gender_experience<-glm(most_frustrating_offline_4~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_offline_4_gender_experience)
+
+glm_H5_most_frustrating_offline_5_gender_experience<-glm(most_frustrating_offline_5~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_offline_5_gender_experience)
+
+Anova(glm_H5_most_frustrating_offline_5_gender_experience, type=3)
+pairs(emmeans(glm_H5_most_frustrating_offline_5_gender_experience, ~running_experience))
+
+glm_H5_most_frustrating_offline_6_gender_experience<-glm(most_frustrating_offline_6~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_offline_6_gender_experience)
+
+glm_H5_most_frustrating_offline_7_gender_experience<-glm(most_frustrating_offline_7~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_offline_7_gender_experience)
+
+glm_H5_most_frustrating_offline_8_gender_experience<-glm(most_frustrating_offline_8~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_offline_8_gender_experience)
+
+glm_H5_most_frustrating_offline_9_gender_experience<-glm(most_frustrating_offline_9~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_offline_9_gender_experience)
+
+Anova(glm_H5_most_frustrating_offline_9_gender_experience, type=3)
+pairs(emmeans(glm_H5_most_frustrating_offline_9_gender_experience, ~running_experience))
+
+glm_H5_most_frustrating_offline_10_gender_experience<-glm(most_frustrating_offline_10~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_offline_10_gender_experience)
+
+Anova(glm_H5_most_frustrating_offline_10_gender_experience, type=3)
+pairs(emmeans(glm_H5_most_frustrating_offline_10_gender_experience, ~running_experience))
+
+glm_H5_most_frustrating_offline_11_gender_experience<-glm(most_frustrating_offline_11~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_offline_11_gender_experience) 
+
+Anova(glm_H5_most_frustrating_offline_11_gender_experience, type=3)
+pairs(emmeans(glm_H5_most_frustrating_offline_11_gender_experience, ~running_experience))
+
+glm_H5_most_frustrating_offline_12_gender_experience<-glm(most_frustrating_offline_12~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+summary(glm_H5_most_frustrating_offline_12_gender_experience)
+```
+
+```{r, results="markup"}
+# results from this chunk will be printed
+Anova(lm_H5_hassle_gender_experience, type=3)
+pairs(emmeans(lm_H5_hassle_gender_experience, ~running_experience))
+```
+
+Beginner were more likely to find buying running shoes is a hassle than Intermediate runners, who in turn were more likely to find it a hassle than Advanced runners (an ordinal effect).
+
+```{r, results="markup"}
+# results from this chunk will be printed
+Anova(glm_H5_most_frustrating_online_5_gender_experience, type=3)
+pairs(emmeans(glm_H5_most_frustrating_online_5_gender_experience, ~running_experience))
+
+Anova(glm_H5_most_frustrating_online_7_gender_experience, type=3)
+pairs(emmeans(glm_H5_most_frustrating_online_7_gender_experience, ~running_experience))
+
+Anova(glm_H5_most_frustrating_online_8_gender_experience, type=3)
+pairs(emmeans(glm_H5_most_frustrating_online_8_gender_experience, ~running_experience))
+
+Anova(glm_H5_most_frustrating_online_9_gender_experience, type=3)
+pairs(emmeans(glm_H5_most_frustrating_online_9_gender_experience, ~running_experience))
+```
+
+When asked the most frustrating aspects of shopping **online**,
+
+For #5 "Identifying running shoes vs. sports shoes", both Advanced and Intermediate runners were less likely to pick this option than Beginners, but no difference between Advanced and Intermediate runners.
+
+For #7 "Product imagery does not portray the benefits", Beginners were more likely to pick this option than Advanced runners. No other differences.
+
+For #8 "Too many options to choose between", both Advanced and Intermediate runners were less likely to pick this option than Beginners, but no difference between Advanced and Intermediate runners.
+
+For #9 "Limited selection of products", Advanced runners were more likely to pick this option than Beginners. No other differences.
+
+```{r, results="markup"}
+# results from this chunk will be printed
+Anova(glm_H5_most_frustrating_offline_1_gender_experience, type=3)
+pairs(emmeans(glm_H5_most_frustrating_offline_1_gender_experience, ~running_experience))
+
+Anova(glm_H5_most_frustrating_offline_5_gender_experience, type=3)
+pairs(emmeans(glm_H5_most_frustrating_offline_5_gender_experience, ~running_experience))
+
+Anova(glm_H5_most_frustrating_offline_9_gender_experience, type=3)
+pairs(emmeans(glm_H5_most_frustrating_offline_9_gender_experience, ~running_experience))
+
+Anova(glm_H5_most_frustrating_offline_10_gender_experience, type=3)
+pairs(emmeans(glm_H5_most_frustrating_offline_10_gender_experience, ~running_experience))
+
+Anova(glm_H5_most_frustrating_offline_11_gender_experience, type=3)
+pairs(emmeans(glm_H5_most_frustrating_offline_11_gender_experience, ~running_experience))
+```
+
+When asked the most frustrating aspects of shopping **offline**,
+
+For #1 "Telling the difference between different models of running shoe", both Advanced and Intermediate runners were less likely to pick this option than Beginners, but no difference between Advanced and Intermediate runners.
+
+For #5 "Poor product knowledge from staff", an ordinal effect was found with Advanced runners being the most likely.
+
+For #9 "Identifying running shoes vs. sports shoes", both Advanced and Intermediate runners were less likely to pick this option than Beginners, but no difference between Advanced and Intermediate runners.
+
+For #10 "Limited selection of products", an ordinal effect was found with Advanced runners being the most likely.
+
+For #11 "Too many options to choose between", Beginners were more more likely to pick this option than Advanced runners. No other difference.
+
+## Hypothesis 6
+
+Support: Consumers feel they need expert advice to buy a running shoe
+
+```{r}
+# DV: need_expert_advice
+
+# IV: source
+
+lm_H6_expert_in_market_gender<-lm(need_expert_advice~Sex, data=dat_in_market)
+summary(lm_H6_expert_in_market_gender)
+
+lm_H6_expert_in_market_gender_segment<-lm(need_expert_advice~Sex+Segment, data=dat_in_market)
+Anova(lm_H6_expert_in_market_gender_segment)
+
+emm_H6_expert_in_market_gender_segment<-emmeans(lm_H6_expert_in_market_gender_segment, ~Segment)
+pairs(emm_H6_expert_in_market_gender_segment, adjust="holm")
+
+lm_H6_expert_in_market_gender_experience<-lm(need_expert_advice~Sex+running_experience, data=dat_in_market)
+summary(lm_H6_expert_in_market_gender_experience)
+
+Anova(lm_H6_expert_in_market_gender_experience, type=3)
+pairs(emmeans(lm_H6_expert_in_market_gender_experience, ~running_experience))
+
+##########
+
+lm_H6_expert_recent_buyer_gender<-lm(need_expert_advice~Sex, data=dat_recent_buyer)
+summary(lm_H6_expert_recent_buyer_gender)
+
+lm_H6_expert_recent_buyer_gender_segment<-lm(need_expert_advice~Sex+Segment, data=dat_recent_buyer)
+Anova(lm_H6_expert_recent_buyer_gender_segment)
+
+lm_H6_expert_source<-lm(need_expert_advice~source, data=dat_combined)
+summary(lm_H6_expert_source)
+
+lm_H6_expert_source_gender<-lm(need_expert_advice~source+Sex, data=dat_combined)
+summary(lm_H6_expert_source_gender)
+
+lm_H6_expert_recent_buyer_gender_experience<-lm(need_expert_advice~Sex+running_experience, data=dat_recent_buyer)
+summary(lm_H6_expert_recent_buyer_gender_experience)
+
+Anova(lm_H6_expert_recent_buyer_gender_experience, type=3)
+
+```
+
+```{r, results="markup"}
+# results from this chunk will be printed
+Anova(lm_H6_expert_in_market_gender_experience, type=3)
+pairs(emmeans(lm_H6_expert_in_market_gender_experience, ~running_experience))
+```
+
+When asked whether they need expert advice to choose the right running shoe (In Market), an ordinal effect was found with Beginners being the most likely to agree with the statement.
+
+```{r, results="markup"}
+# results from this chunk will be printed
+Anova(lm_H6_expert_recent_buyer_gender_experience, type=3)
+```
+
+Running experience does not have an effect on the similar question in the Recent Buyer sample ("When shopping for running shoes in-store, I prefer to get help and advice from a member of staff").
+
+
+## Hypothesis 7
+
+Desire: consumers don't see the value of buying performance products vs. lifestyle
+
+```{r}
+# DV: benefits_over_trainers (In-Market only)
+
+# IV: 
+
+lm_H7_benefit_gender<-lm(benefits_over_trainers~Sex, data=dat_in_market)
+summary(lm_H7_benefit_gender)
+
+lm_H7_benefit_gender_segment<-lm(benefits_over_trainers~Sex+Segment, data=dat_in_market)
+Anova(lm_H7_benefit_gender_segment)
+
+emm_H7_benefit_gender_segment<-emmeans(lm_H7_benefit_gender_segment, ~Segment)
+pairs(emm_H7_benefit_gender_segment, adjust="holm")
+
+lm_H7_benefit_gender_experience<-lm(benefits_over_trainers~Sex+running_experience, data=dat_in_market)
+summary(lm_H7_benefit_gender_experience)
+
+Anova(lm_H7_benefit_gender_experience, type=3)
+pairs(emmeans(lm_H7_benefit_gender_experience, ~running_experience))
+
+##########
+
+glm_difference_running_shoes_trainers_1_gender<-glm(difference_running_shoes_trainers_1~Sex, data=dat_in_market, family=binomial)
+summary(glm_difference_running_shoes_trainers_1_gender)
+
+glm_difference_running_shoes_trainers_2_gender<-glm(difference_running_shoes_trainers_2~Sex, data=dat_in_market, family=binomial)
+summary(glm_difference_running_shoes_trainers_2_gender)
+
+glm_difference_running_shoes_trainers_3_gender<-glm(difference_running_shoes_trainers_3~Sex, data=dat_in_market, family=binomial)
+summary(glm_difference_running_shoes_trainers_3_gender)
+
+glm_difference_running_shoes_trainers_4_gender<-glm(difference_running_shoes_trainers_4~Sex, data=dat_in_market, family=binomial)
+summary(glm_difference_running_shoes_trainers_4_gender) # ***
+
+glm_difference_running_shoes_trainers_5_gender<-glm(difference_running_shoes_trainers_5~Sex, data=dat_in_market, family=binomial)
+summary(glm_difference_running_shoes_trainers_5_gender) # **
+
+glm_difference_running_shoes_trainers_6_gender<-glm(difference_running_shoes_trainers_6~Sex, data=dat_in_market, family=binomial)
+summary(glm_difference_running_shoes_trainers_6_gender)
+
+glm_difference_running_shoes_trainers_7_gender<-glm(difference_running_shoes_trainers_7~Sex, data=dat_in_market, family=binomial)
+summary(glm_difference_running_shoes_trainers_7_gender)
+
+glm_difference_running_shoes_trainers_8_gender<-glm(difference_running_shoes_trainers_8~Sex, data=dat_in_market, family=binomial)
+summary(glm_difference_running_shoes_trainers_8_gender) # ***
+
+```
+
+```{r, results="markup"}
+# results from this chunk will be printed
+Anova(lm_H7_benefit_gender_experience, type=3)
+pairs(emmeans(lm_H7_benefit_gender_experience, ~running_experience))
+```
+
+When asked "I know what benefits a running shoe offers over and above a trainer", an ordinal effect was found with Advanced runners being the most likely to answer positively.
+
+## Hypothesis 8
+
+Intent: Consumers aren't committed to buying performance over lifestyle
+
+```{r}
+# DV: type_shoes (In Market)
+
+# IV: 
+
+multi_type_gender<-multinom(type_shoes~Sex, data=dat_in_market)
+Anova(multi_type_gender)
+
+dat_in_market<-dat_in_market %>% mutate(type_shoes_running=ifelse(grepl("Running", type_shoes), 1, 0))
+
+glm_type_shoes_running_gender<-glm(type_shoes_running~Sex, data=dat_in_market)
+summary(glm_type_shoes_running_gender)
+
+dat_in_market<-dat_in_market %>% mutate(type_shoes_not_sure=ifelse(grepl("sure", type_shoes), 1, 0))
+
+glm_type_shoes_not_sure_gender<-glm(type_shoes_not_sure~Sex, data=dat_in_market)
+summary(glm_type_shoes_not_sure_gender)
+
+glm_type_shoes_running_gender_experience<-glm(type_shoes_running~Sex+running_experience, data=dat_in_market)
+summary(glm_type_shoes_running_gender_experience)
+
+Anova(glm_type_shoes_running_gender_experience, type=3)
+pairs(emmeans(glm_type_shoes_running_gender_experience, ~running_experience))
+
+glm_type_shoes_not_sure_gender_experience<-glm(type_shoes_not_sure~Sex+running_experience, data=dat_in_market)
+summary(glm_type_shoes_not_sure_gender_experience)
+
+Anova(glm_type_shoes_not_sure_gender_experience, type=3)
+pairs(emmeans(glm_type_shoes_not_sure_gender_experience, ~running_experience))
+```
+
+```{r, results="markup"}
+# results from this chunk will be printed
+Anova(glm_type_shoes_running_gender_experience, type=3)
+pairs(emmeans(glm_type_shoes_running_gender_experience, ~running_experience))
+
+Anova(glm_type_shoes_not_sure_gender_experience, type=3)
+pairs(emmeans(glm_type_shoes_not_sure_gender_experience, ~running_experience))
+```
+
+When asked "What kind of shoe are you looking to buy?", both Advanced and Intermediate runners were more likely to answer "Running Shoes" than Beginners, but no difference between Advanced and Intermediate runners.
+
+On the contrary, both Advanced and Intermediate runners were less likely to answer "Not Sure" than Beginners, but no difference between Advanced and Intermediate runners.
+
+## Hypothesis 9
+
+Motives: Different motivations drive different purchase behaviours
+
+```{r}
+# DV: why_run_(15), interest_buy_shoes_(5)
+
+# IV: source
+
+glm_H9_why_run_1_gender_source_experience<-glm(why_run_1~Sex+source+running_experience, data=dat_combined, family=binomial)
+summary(glm_H9_why_run_1_gender_source_experience)
+
+Anova(glm_H9_why_run_1_gender_source_experience, type=3)
+pairs(emmeans(glm_H9_why_run_1_gender_source_experience, ~running_experience))
+
+glm_H9_why_run_2_gender_source_experience<-glm(why_run_2~Sex+source+running_experience, data=dat_combined, family=binomial)
+summary(glm_H9_why_run_2_gender_source_experience)
+
+Anova(glm_H9_why_run_2_gender_source_experience, type=3)
+pairs(emmeans(glm_H9_why_run_2_gender_source_experience, ~running_experience))
+
+glm_H9_why_run_3_gender_source_experience<-glm(why_run_3~Sex+source+running_experience, data=dat_combined, family=binomial)
+summary(glm_H9_why_run_3_gender_source_experience)
+
+Anova(glm_H9_why_run_3_gender_source_experience, type=3)
+pairs(emmeans(glm_H9_why_run_3_gender_source_experience, ~running_experience))
+
+glm_H9_why_run_4_gender_source_experience<-glm(why_run_4~Sex+source+running_experience, data=dat_combined, family=binomial)
+summary(glm_H9_why_run_4_gender_source_experience)
+
+glm_H9_why_run_5_gender_source_experience<-glm(why_run_5~Sex+source+running_experience, data=dat_combined, family=binomial)
+summary(glm_H9_why_run_5_gender_source_experience)
+
+Anova(glm_H9_why_run_5_gender_source_experience, type=3)
+pairs(emmeans(glm_H9_why_run_5_gender_source_experience, ~running_experience))
+
+glm_H9_why_run_6_gender_source_experience<-glm(why_run_6~Sex+source+running_experience, data=dat_combined, family=binomial)
+summary(glm_H9_why_run_6_gender_source_experience)
+
+Anova(glm_H9_why_run_6_gender_source_experience, type=3)
+pairs(emmeans(glm_H9_why_run_6_gender_source_experience, ~running_experience))
+
+glm_H9_why_run_7_gender_source_experience<-glm(why_run_7~Sex+source+running_experience, data=dat_combined, family=binomial)
+summary(glm_H9_why_run_7_gender_source_experience)
+
+Anova(glm_H9_why_run_7_gender_source_experience, type=3)
+pairs(emmeans(glm_H9_why_run_7_gender_source_experience, ~running_experience))
+
+glm_H9_why_run_8_gender_source_experience<-glm(why_run_8~Sex+source+running_experience, data=dat_combined, family=binomial)
+summary(glm_H9_why_run_8_gender_source_experience)
+
+Anova(glm_H9_why_run_8_gender_source_experience, type=3)
+pairs(emmeans(glm_H9_why_run_8_gender_source_experience, ~running_experience))
+
+glm_H9_why_run_9_gender_source_experience<-glm(why_run_9~Sex+source+running_experience, data=dat_combined, family=binomial)
+summary(glm_H9_why_run_9_gender_source_experience)
+
+glm_H9_why_run_10_gender_source_experience<-glm(why_run_10~Sex+source+running_experience, data=dat_combined, family=binomial)
+summary(glm_H9_why_run_10_gender_source_experience)
+
+glm_H9_why_run_11_gender_source_experience<-glm(why_run_11~Sex+source+running_experience, data=dat_combined, family=binomial)
+summary(glm_H9_why_run_11_gender_source_experience)
+
+Anova(glm_H9_why_run_11_gender_source_experience, type=3)
+pairs(emmeans(glm_H9_why_run_11_gender_source_experience, ~running_experience))
+
+glm_H9_why_run_12_gender_source_experience<-glm(why_run_12~Sex+source+running_experience, data=dat_combined, family=binomial)
+summary(glm_H9_why_run_12_gender_source_experience)
+
+Anova(glm_H9_why_run_12_gender_source_experience, type=3)
+pairs(emmeans(glm_H9_why_run_12_gender_source_experience, ~running_experience))
+
+glm_H9_why_run_13_gender_source_experience<-glm(why_run_13~Sex+source+running_experience, data=dat_combined, family=binomial)
+summary(glm_H9_why_run_13_gender_source_experience)
+
+Anova(glm_H9_why_run_13_gender_source_experience, type=3)
+pairs(emmeans(glm_H9_why_run_13_gender_source_experience, ~running_experience))
+
+glm_H9_why_run_14_gender_source_experience<-glm(why_run_14~Sex+source+running_experience, data=dat_combined, family=binomial)
+summary(glm_H9_why_run_14_gender_source_experience)
+
+Anova(glm_H9_why_run_14_gender_source_experience, type=3)
+pairs(emmeans(glm_H9_why_run_14_gender_source_experience, ~running_experience))
+
+glm_H9_why_run_15_gender_source_experience<-glm(why_run_15~Sex+source+running_experience, data=dat_combined, family=binomial)
+summary(glm_H9_why_run_15_gender_source_experience)
+
+Anova(glm_H9_why_run_15_gender_source_experience, type=3)
+pairs(emmeans(glm_H9_why_run_15_gender_source_experience, ~running_experience))
+
+```
+
+```{r, results="markup"}
+# results from this chunk will be printed
+
+Anova(glm_H9_why_run_1_gender_source_experience, type=3)
+pairs(emmeans(glm_H9_why_run_1_gender_source_experience, ~running_experience))
+
+Anova(glm_H9_why_run_2_gender_source_experience, type=3)
+pairs(emmeans(glm_H9_why_run_2_gender_source_experience, ~running_experience))
+
+Anova(glm_H9_why_run_3_gender_source_experience, type=3)
+pairs(emmeans(glm_H9_why_run_3_gender_source_experience, ~running_experience))
+
+Anova(glm_H9_why_run_5_gender_source_experience, type=3)
+pairs(emmeans(glm_H9_why_run_5_gender_source_experience, ~running_experience))
+
+Anova(glm_H9_why_run_6_gender_source_experience, type=3)
+pairs(emmeans(glm_H9_why_run_6_gender_source_experience, ~running_experience))
+
+Anova(glm_H9_why_run_7_gender_source_experience, type=3)
+pairs(emmeans(glm_H9_why_run_7_gender_source_experience, ~running_experience))
+
+Anova(glm_H9_why_run_8_gender_source_experience, type=3)
+pairs(emmeans(glm_H9_why_run_8_gender_source_experience, ~running_experience))
+
+Anova(glm_H9_why_run_11_gender_source_experience, type=3)
+pairs(emmeans(glm_H9_why_run_11_gender_source_experience, ~running_experience))
+
+Anova(glm_H9_why_run_12_gender_source_experience, type=3)
+pairs(emmeans(glm_H9_why_run_12_gender_source_experience, ~running_experience))
+
+Anova(glm_H9_why_run_13_gender_source_experience, type=3)
+pairs(emmeans(glm_H9_why_run_13_gender_source_experience, ~running_experience))
+
+Anova(glm_H9_why_run_14_gender_source_experience, type=3)
+pairs(emmeans(glm_H9_why_run_14_gender_source_experience, ~running_experience))
+
+Anova(glm_H9_why_run_15_gender_source_experience, type=3)
+pairs(emmeans(glm_H9_why_run_15_gender_source_experience, ~running_experience))
+```
+
+Running experience has an effect on many of the motives.
+
+For #1 "It keeps my mind and body 'feeling good'", both Advanced and Intermediate runners were more likely to pick this option than Beginners. No difference between Advanced and Intermediate runners.
+
+For #2 "It helps me avoid illness and stay healthy", both Advanced and Intermediate runners were more likely to pick this option than Beginners. No difference between Advanced and Intermediate runners.
+
+For #3 "I like competing against others", an ordinal effect was found with Advanced runners being the most likely to pick this option.
+
+For #5 "It helps me focus on my diet, nutrition and hydration", both Advanced and Intermediate runners were more likely to pick this option than Beginners. No difference between Advanced and Intermediate runners.
+
+For #6 "It helps me feel confident and strong", an ordinal effect was found with Advanced runners being the most likely to pick this option.
+
+For #7 "It helps me nurture a relationship with a significant other", Intermediate runners were more likely to choose this option than Beginners. No other differences.
+
+For #8 "It helps me improve my physical appearance", Intermediate runners were more likely to pick this option than Advanced runner. No other differences.
+
+For #11 "I enjoy getting out into new environments", an ordinal effect was found with Advanced runners being the most likely to pick this option.
+
+For #12 "I get to spend time with friends", an ordinal effect was also found with Advanced runners being the most likely to pick this option.
+
+Fpr #13 "It's a way for me to contribute to a cause/charity that matters to me", Advanced runners were more likely to pick this option than Beginners. No other differences.
+
+For #14 "I like staying close to the latest news and trends", Advanced runners were more likely to pick this option than both Intermediate runners and beginners.
+
+For #15 "I like getting better and mastering new skills", an ordinal effect was also found with Advanced runners being the most likely to pick this option.
+
+Overall, an ordinal effect (Advanced>Intermediate>Beginners) was found for many of the motives.
+
+```{r}
+## Hypothesis 10
+
+# Intent: Consumers want to find the right running shoes for their purpose
+
+# DV:
+
+# IV: 
+
+
+```
+
+```{r, results="markup"}
+# results from this chunk will be printed
+
+```
+
+
+```{r}
+## Hypothesis 11
+
+# Intent: Consumers value aesthetics more than tech specs
+
+# DV:
+
+# IV: 
+
+
+```
+
+```{r, results="markup"}
+# results from this chunk will be printed
+
+```
+
+```{r}
+# Number of Motives
+
+list_why_run<-c("why_run_1", "why_run_2", "why_run_3", "why_run_4", "why_run_5", "why_run_6", "why_run_7", "why_run_8", "why_run_9", "why_run_10", "why_run_11", "why_run_12", "why_run_13", "why_run_14", "why_run_15")
+
+dat_combined<-dat_combined %>% mutate_at(.vars=vars(list_why_run), .funs=list(~as.character(.))) %>% mutate_at(.vars=vars(list_why_run), .funs=list(~as.numeric(.)))
+
+# counts the number of motives
+
+count_n_motives<-dat_combined %>% select(list_why_run) %>% rowSums
+
+dat_combined<-dat_combined %>% mutate(n_motives=count_n_motives)
+
+glm_spending_n_motives<-glm(spending_recoded~n_motives, data=dat_combined, family=binomial)
+summary(glm_spending_n_motives)
+
+lm_spending_n_motives<-lm(spending_numeric~n_motives, data=dat_combined)
+summary(lm_spending_n_motives)
+
+cor(dat_combined %>% select(list_why_run), method="pearson")
+```
+
+```{r}
+dat_combined<-dat_combined %>% mutate_at(.vars=vars(list_why_run), .funs=list(~as.factor(.)))
+
+lm_spending_why_run_1<-lm(spending_numeric~why_run_1, data=dat_combined)
+summary(lm_spending_why_run_1) # ***
+
+lm_spending_why_run_2<-lm(spending_numeric~why_run_2, data=dat_combined)
+summary(lm_spending_why_run_2)
+
+lm_spending_why_run_3<-lm(spending_numeric~why_run_3, data=dat_combined)
+summary(lm_spending_why_run_3) # ***
+
+lm_spending_why_run_4<-lm(spending_numeric~why_run_4, data=dat_combined)
+summary(lm_spending_why_run_4)
+
+lm_spending_why_run_5<-lm(spending_numeric~why_run_5, data=dat_combined)
+summary(lm_spending_why_run_5)
+
+lm_spending_why_run_6<-lm(spending_numeric~why_run_6, data=dat_combined)
+summary(lm_spending_why_run_6)
+
+lm_spending_why_run_7<-lm(spending_numeric~why_run_7, data=dat_combined)
+summary(lm_spending_why_run_7)
+
+lm_spending_why_run_8<-lm(spending_numeric~why_run_8, data=dat_combined)
+summary(lm_spending_why_run_8)
+
+lm_spending_why_run_9<-lm(spending_numeric~why_run_9, data=dat_combined)
+summary(lm_spending_why_run_9)
+
+lm_spending_why_run_10<-lm(spending_numeric~why_run_10, data=dat_combined)
+summary(lm_spending_why_run_10) # ***
+
+lm_spending_why_run_11<-lm(spending_numeric~why_run_11, data=dat_combined)
+summary(lm_spending_why_run_11) # ***
+
+lm_spending_why_run_12<-lm(spending_numeric~why_run_12, data=dat_combined)
+summary(lm_spending_why_run_12)
+
+lm_spending_why_run_13<-lm(spending_numeric~why_run_13, data=dat_combined)
+summary(lm_spending_why_run_13)
+
+lm_spending_why_run_14<-lm(spending_numeric~why_run_14, data=dat_combined)
+summary(lm_spending_why_run_14) # **
+
+lm_spending_why_run_15<-lm(spending_numeric~why_run_15, data=dat_combined)
+summary(lm_spending_why_run_15) # ***
+```
+
+# Updates (2020-03-10)
+
+```{r}
+dat_recent_buyer<-dat_recent_buyer %>% mutate(online_offline=as.factor(online_offline))
+
+glm_online_offline_gender_experience<-glm(online_offline~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+summary(glm_online_offline_gender_experience)
+
+Anova(glm_online_offline_gender_experience, type=3)
+pairs(emmeans(glm_online_offline_gender_experience, ~running_experience))
+```
+
+```{r, results="markup"}
+# results from this chunk will be printed
+Anova(glm_online_offline_gender_experience, type=3)
+pairs(emmeans(glm_online_offline_gender_experience, ~running_experience))
+```
+
+The above investigates where recent buyers bought their running shoes (here Online is 1 and Offline is 0, so a positive coefficient means "more likely to answer Online").
+
+An ordinal effect was found for running experience, with Advanced runners being the most likely to buy their recent pairs of running shoes online.
+
+```{r, results="markup"}
+glm_online_search_1_gender_experience<-glm(online_search_1~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+Anova(glm_online_search_1_gender_experience)
+pairs(emmeans(glm_online_search_1_gender_experience, ~running_experience))
+
+glm_online_search_2_gender_experience<-glm(online_search_2~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+Anova(glm_online_search_2_gender_experience)
+pairs(emmeans(glm_online_search_2_gender_experience, ~running_experience))
+
+glm_online_search_3_gender_experience<-glm(online_search_3~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+Anova(glm_online_search_3_gender_experience)
+pairs(emmeans(glm_online_search_3_gender_experience, ~running_experience))
+
+glm_online_search_4_gender_experience<-glm(online_search_4~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+Anova(glm_online_search_4_gender_experience)
+pairs(emmeans(glm_online_search_4_gender_experience, ~running_experience))
+
+glm_online_search_5_gender_experience<-glm(online_search_5~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+Anova(glm_online_search_5_gender_experience)
+pairs(emmeans(glm_online_search_5_gender_experience, ~running_experience))
+```
+
+When asked "Did you do any research before buying them?", running experience played a role in participant's responses.
+
+For #1 "Researched online", an ordinal effect was found with Advanced runners being the most likely to choose this option.
+
+For #2 "Visited a physical store", Advanced runners were less likely to choose this option than the other two groups. No other differences.
+
+For #3 "Asked friends or family for advice", Intermediate runners were more likely to choose this option than Beginners. No other differences.
+
+For #4 "Researched online and visited a store", both Advanced and Intermediate runners were more likely to choose this option than Beginners, but no differences between Advanced and Intermediate runners.
+
+For #5 "No research", Beginners were more likely to choose this option than the other two groups, but no differences between Advanced and Intermediate runners.
+
+```{r}
+multinom_where_usually_gender_experience<-multinom(where_usually~Sex+running_experience, data=dat_recent_buyer)
+Anova(multinom_where_usually_gender_experience, test="Chisq")
+
+dat_recent_buyer_subset<-dat_recent_buyer %>% filter(where_usually!="no preference") %>% mutate(where_usually=as.factor(where_usually))
+
+contrasts(dat_recent_buyer_subset$where_usually)
+
+glm_where_usually_gender_experience<-glm(where_usually~Sex+running_experience, data=dat_recent_buyer_subset, family=binomial)
+Anova(glm_where_usually_gender_experience, type=3)
+
+pairs(emmeans(glm_where_usually_gender_experience, ~running_experience))
+
+##########
+
+with(dat_recent_buyer, prop.table(table(where_usually, running_experience), margin=2))
+
+dat_recent_buyer<-dat_recent_buyer %>% mutate(where_usually_no_preference=ifelse(where_usually=="no preference", 1, 0)) %>% mutate(where_usually_no_preference=as.factor(where_usually_no_preference))
+
+glm_where_usually_gender_experience_no_preference<-glm(where_usually_no_preference~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+Anova(glm_where_usually_gender_experience_no_preference, type=3)
+
+pairs(emmeans(glm_where_usually_gender_experience_no_preference, ~running_experience))
+```
+
+```{r, results="markup"}
+# results from this chunk will be printed
+Anova(glm_where_usually_gender_experience, type=3)
+pairs(emmeans(glm_where_usually_gender_experience, ~running_experience))
+
+Anova(glm_where_usually_gender_experience_no_preference, type=3)
+pairs(emmeans(glm_where_usually_gender_experience_no_preference, ~running_experience))
+```
+
+The above investigates the question "Where would you usually buy from?"
+
+This question involves more than 2 responses. Since multinomial models are difficult to interpret and pairwise comparisons for such models (Advanced vs Intermediate, etc...) are in fact not possible, the following two models were run instead.
+
+The first model compared "Multi-brand retailer" and "Store brand" while all participants responding "No preference" were removed from the data set (only for this model), here "Store brand" is 1 and "Multi-brand retailer" is 0. Results showed that Advanced runners were more likely to shop at Store brands (e.g. Nike and Adidas) than Beginners, but no other differences were found.
+
+The second model includes all participants and compared "No preference" to the other two options. Perhaps surprisingly, an ordinal effect was found with Advanced runners being the most likely to answer "No preference".
+
+Overall, it was found that Advanced and Intermediate runners were more likely to answer "No preference" than Beginners, while Advanced runner were more likely to answer "Store brands" (e.g. Nike and Adidas) than Beginners.
+
+But those are comparisons **between** groups. If we look at the results **within** each group, "Multi-brand retailer" is still the most likely response in each experience group by far.
+
+```{r}
+dat_recent_buyer<-dat_recent_buyer %>% mutate(where_bought=as.factor(where_bought))
+
+contrasts(dat_recent_buyer$where_bought)
+
+glm_where_bought_gender_experience<-glm(where_bought~Sex+running_experience, data=dat_recent_buyer, family=binomial)
+```
+
+```{r, results="markup"}
+Anova(glm_where_bought_gender_experience, type=3)
+pairs(emmeans(glm_where_bought_gender_experience, ~running_experience))
+```
+
+For the question "Where did you buy them from?", an ordinal effect was found with Advanced runners being the most likely to buy their recent shoes from "Store brands" (e.g. Nike and Adidas).
+
+# Updates (2020-03-16)
+
+```{r}
+glm_interest_buy_shoes_1<-glm(interest_buy_shoes_1~Sex+running_experience, data=dat_in_market, family=binomial)
+
+Anova(glm_interest_buy_shoes_1, type=3)
+pairs(emmeans(glm_interest_buy_shoes_1, ~running_experience))
+
+glm_interest_buy_shoes_2<-glm(interest_buy_shoes_2~Sex+running_experience, data=dat_in_market, family=binomial)
+
+Anova(glm_interest_buy_shoes_2, type=3)
+pairs(emmeans(glm_interest_buy_shoes_2, ~running_experience))
+
+glm_interest_buy_shoes_3<-glm(interest_buy_shoes_3~Sex+running_experience, data=dat_in_market, family=binomial)
+
+Anova(glm_interest_buy_shoes_3, type=3)
+pairs(emmeans(glm_interest_buy_shoes_3, ~running_experience))
+
+glm_interest_buy_shoes_4<-glm(interest_buy_shoes_4~Sex+running_experience, data=dat_in_market, family=binomial)
+
+Anova(glm_interest_buy_shoes_4, type=3)
+pairs(emmeans(glm_interest_buy_shoes_4, ~running_experience))
+
+glm_interest_buy_shoes_5<-glm(interest_buy_shoes_5~Sex+running_experience, data=dat_in_market, family=binomial)
+
+Anova(glm_interest_buy_shoes_5, type=3)
+pairs(emmeans(glm_interest_buy_shoes_5, ~running_experience))
+```
+
+```{r, results="markup"}
+Anova(glm_interest_buy_shoes_1, type=3)
+pairs(emmeans(glm_interest_buy_shoes_1, ~running_experience))
+
+Anova(glm_interest_buy_shoes_2, type=3)
+pairs(emmeans(glm_interest_buy_shoes_2, ~running_experience))
+
+Anova(glm_interest_buy_shoes_3, type=3)
+pairs(emmeans(glm_interest_buy_shoes_3, ~running_experience))
+
+Anova(glm_interest_buy_shoes_4, type=3)
+summary(glm_interest_buy_shoes_4)
+
+Anova(glm_interest_buy_shoes_5, type=3)
+pairs(emmeans(glm_interest_buy_shoes_5, ~running_experience))
+```
+
+Both gender and running experience play a role in determining the reasons why participants were interested in buying new running shoes, although running experience seems to play a bigger role.
+
+For #1 "I want to improve my performance (e.g. speed, distance, stamina)", an ordinal effect was found with Advanced runners being the most likely to choose this option. 
+
+For #2 "I plan to run more often", an ordinal effect was found with Beginners being the most likely to choose this option.
+
+For #3 "I need to replace old shoes", both Advanced and Intermediate runners were more likely to choose this option, but no difference between Advanced and Intermediate runners was found.
+
+For #4 "I want to compete in a race", there is a gender effect with Male participants more likely to choose this option. 
+
+For #5 "I have set a health goal, e.g. lose weight", an ordinal effect was found with Beginners being the most likely to choose this option.

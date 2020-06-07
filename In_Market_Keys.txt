@@ -1,0 +1,127 @@
+# In Market
+
+## Q1: What city do you live in?
+
+city: open text
+
+## Q2: How often do you run?
+
+run_frequency: I don't yet run, Occasionally, 1-2 times per week, 3-4 times per week, 5+ times per week
+
+## Q3: Where do you usually like to run?
+
+where_run_1: Gym
+where_run_2: Road
+where_run_3: Trail
+where_run_4: Track
+
+## Q4: When it comes to your running experience, how would you describe yourself?
+
+running_experience: Beginner, Intermediate, Advanced
+
+## Q5: Why do you run?
+
+why_run_1: It keeps my mind and body 'feeling good'
+why_run_2: It helps me avoid illness and stay healthy
+why_run_3: I like competing against others
+why_run_4: It helps me improve my sex life
+why_run_5: It helps me focus on my diet, nutrition and hydration
+why_run_6: It helps me feel confident and strong
+why_run_7: It helps me nurture a relationship with a significant other
+why_run_8: It helps me improve my physical appearance
+why_run_9: It helps me spend time with, or set an example to, my children
+why_run_10: I enjoy collecting new equipment, clothing, shoes etc.
+why_run_11: I enjoy getting out into new environments
+why_run_12: I get to spend time with friends
+why_run_13: It's a way for me to contribute to a cause/charity that matters to me
+why_run_14: I like staying close to the latest news and trends
+why_run_15: I like getting better and mastering new skills
+
+## Q6: Why are you interested in buying new shoes for running?
+
+interest_buy_shoes_1: I want to improve my performance (e.g. speed, distance, stamina)
+interest_buy_shoes_2: I plan to run more often
+interest_buy_shoes_3: I need to replace old shoes
+interest_buy_shoes_4: I want to compete in a race
+interest_buy_shoes_5: I have set a health goal, e.g. lose weight
+interest_buy_shoes_6: Other
+
+## Q7: What kind of shoe are you looking to buy?
+
+type_shoes: Sports Shoe, Lifestyle Shoe, Running shoes, Not sure
+
+## Q8: What three words would you use to describe a good running shoe?
+
+three_words_1: open text
+three_words_2: open text
+three_words_3: open text
+
+## Q9: How much are you planning on spending?
+
+expected_spending: <€50, €50-100, €100-150, €150-200, €200+
+
+## Q10: It's easy to tell the difference between running shoes and other sports shoes
+
+difference_easy_to_tell: Strongly Agree, Agree, Neither agree nor disagree, Disagree, Strongly Disagree
+
+## Q11: How do running shoes differ from other trainers?
+
+difference_running_shoes_trainers_1: Design / Style
+difference_running_shoes_trainers_2: Colour Options
+difference_running_shoes_trainers_3: Durability
+difference_running_shoes_trainers_4: Technology
+difference_running_shoes_trainers_5: Fit / Shoe-feel
+difference_running_shoes_trainers_6: Price
+difference_running_shoes_trainers_7: Benefits (e.g. speed, motion, comfort)
+difference_running_shoes_trainers_8: I'm not sure
+
+## Q12: I feel confident choosing the right running shoes
+
+confidence_right_shoes: Strongly Agree, Agree, Neither agree nor disagree, Disagree, Strongly Disagree
+
+## Q13: I would feel more confident buying running shoes if (Choose 3)
+
+more_confident_if_1: I saw them endorsed by a respected professional
+more_confident_if_2: I knew I was getting good value for money
+more_confident_if_3: I knew other people like me had bought them
+more_confident_if_4: I had a positive experience buying these from the brand previously
+more_confident_if_5: They were clearly signposted as the best match for my needs
+more_confident_if_6: I saw advertising / promotions / customer reviews
+more_confident_if_7: I knew they were the most comfortable / best fit
+more_confident_if_8: A friend or peer's agreed I had chosen the right ones
+more_confident_if_9: I knew they were the best pair to help me achieve my goals
+more_confident_if_10: Other (open text)
+
+## Q14: I know which product features to look at on when choosing running shoes
+
+know_which_features: Strongly Agree, Agree, Neither agree nor disagree, Disagree, Strongly Disagree
+
+## Q15: The most important things to me when choosing a running shoe are (Choose 3)
+
+most_important_choosing_1: Colour / Design
+most_important_choosing_2: Protection against injury
+most_important_choosing_3: Durability
+most_important_choosing_4: Shock absorption
+most_important_choosing_5: Lightweight
+most_important_choosing_6: Maintenance / anti-pronation
+most_important_choosing_7: Bounce and cushioning
+most_important_choosing_8: Price
+most_important_choosing_9: Fit & Feel
+most_important_choosing_10: Specialised to surface (e.g. track vs. road)
+most_important_choosing_11: Other
+
+## Q16: Running shoes are too expensive for what I need
+
+too_expensive: Strongly Agree, Agree, Neither agree nor disagree, Disagree, Strongly Disagree
+
+## Q17: I find buying running shoes is a hassle
+
+is_a_hassle: Strongly Agree, Agree, Neither agree nor disagree, Disagree, Strongly Disagree
+
+## Q18: I need expert advice to choose the right running shoe
+
+need_expert_advice: Strongly Agree, Agree, Neither agree nor disagree, Disagree, Strongly Disagree
+
+## Q19: I know what benefits a running shoe offers over and above a trainer
+
+benefits_over_trainers: Strongly Agree, Agree, Neither agree nor disagree, Disagree, Strongly Disagree

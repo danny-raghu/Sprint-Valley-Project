@@ -1,0 +1,142 @@
+# Recent Buyer
+
+## Q1: When did you last buy running shoes?
+
+last_buy_shoes: I don't own running shoes, 0-3 months ago, 4-6 months ago, 7-12 months ago, 12 months +
+
+## Q2: How often do you run?
+
+run_frequency: I don't yet run, Occasionally, 1-2 times per week, 3-4 times per week, 5+ times per week
+
+## Q3: Where do you usually like to run?
+
+where_run_1: Gym
+where_run_2: Road
+where_run_3: Trail
+where_run_4: Track
+
+## Q4: When it comes to your running experience, how would you describe yourself?
+
+running_experience: Beginner, Intermediate, Advanced
+
+## Q5: Why do you run?
+
+why_run_1: It keeps my mind and body 'feeling good'
+why_run_2: It helps me avoid illness and stay healthy
+why_run_3: I like competing against others
+why_run_4: It helps me improve my sex life
+why_run_5: It helps me focus on my diet, nutrition and hydration
+why_run_6: It helps me feel confident and strong
+why_run_7: It helps me nurture a relationship with a significant other
+why_run_8: It helps me improve my physical appearance
+why_run_9: It helps me spend time with, or set an example to, my children
+why_run_10: I enjoy collecting new equipment, clothing, shoes etc.
+why_run_11: I enjoy getting out into new environments
+why_run_12: I get to spend time with friends
+why_run_13: It's a way for me to contribute to a cause/charity that matters to me
+why_run_14: I like staying close to the latest news and trends
+why_run_15: I like getting better and mastering new skills
+
+## Q6: Why did you buy new running shoes?
+
+interest_buy_shoes_1: I want to improve my performance (e.g. speed, distance, stamina)
+interest_buy_shoes_2: I plan to run more often
+interest_buy_shoes_3: I need to replace old shoes
+interest_buy_shoes_4: I want to compete in a race
+interest_buy_shoes_5: I have set a health goal, e.g. lose weight
+interest_buy_shoes_6: Other
+
+## Q7: What three words would you use to describe a good running shoe?
+
+three_words_1: open text
+three_words_2: open text
+three_words_3: open text
+
+## Q8: How much did you spend?
+
+recent_spending: <€50, €50-100, €100-150, €150-200, €200+
+
+## Q9: Where did you buy your running shoes?
+
+online_offline: Online, In-Store
+
+## Q10: Did you do any research before buying them?
+
+online_search_1: Researched online
+online_search_2: Visited a physical store
+online_search_3: Asked friends or family for advice
+online_search_4: Researched online and visited a store
+online_search_5: No research
+online_search_6: Other (open text)
+
+## Q11: Where would you usually buy from?
+
+where_usually: Multi-brand retailer (e.g. Go Sport or Decathlon), Brand retailer (e.g. Nike, Adidas), No preference
+
+## Q12: Where did you buy them from?
+
+where_bought: Multi-brand retailer (e.g. Decathlon), Brand retailer (e.g. Nike)
+
+## Q13: The most important things to me when choosing a running shoe are (Choose 3)
+
+most_important_choosing_1: Colour / Design
+most_important_choosing_2: Protection against injuries
+most_important_choosing_3: Durability
+most_important_choosing_4: Shock absorption
+most_important_choosing_5: Cushion/bounce/response
+most_important_choosing_6: Maintenance / anti-pronation
+most_important_choosing_7: Bounce and cushioning
+most_important_choosing_8: Price
+most_important_choosing_9: Fit and comfort
+most_important_choosing_10: Specialised to surface (e.g. track vs. road)
+most_important_choosing_11: Other
+
+## Q14: I felt confident choosing the right running shoes
+
+confidence_right_shoes: Strongly Agree, Agree, Neither agree nor disagree, Disagree, Strongly Disagree
+
+## Q15: The things that gave me most confidence were...
+
+more_confident_if_1: I saw them endorsed by a respected professional
+more_confident_if_2: I knew I was getting good value for money
+more_confident_if_3: I knew other people like me had bought them
+more_confident_if_4: I had a positive experience buying these from the brand previously
+more_confident_if_5: They were clearly signposted as the best match for my needs
+more_confident_if_6: I saw advertising / promotions / customer reviews
+more_confident_if_7: I knew they were the most comfortable / best fit
+more_confident_if_8: A friend or peer's agreed I had chosen the right ones
+more_confident_if_9: I knew they were the best pair to help me achieve my goals
+
+## Q16: When shopping for running shoes online, which of these would you say is the most frustrating to your experience?
+
+most_frustrating_online_1: Telling the difference between different models of running shoe
+most_frustrating_online_2: Telling the difference between different brands of running shoes
+most_frustrating_online_3: Finding a product that matches my personal needs
+most_frustrating_online_4: Telling the difference between products at different price points
+most_frustrating_online_5: Identifying running shoes vs. sports shoes
+most_frustrating_online_6: Different websites use different language to describe the products
+most_frustrating_online_7: Product imagery does not portray the benefits
+most_frustrating_online_8: Too many options to choose between
+most_frustrating_online_9: Limited selection of products
+most_frustrating_online_10: No frustrations
+most_frustrating_online_11: Other
+
+## Q17: When shopping for running shoes in-store, which of these would you say is the most frustrating to your experience?
+
+most_frustrating_offline_1: Telling the difference between different models of running shoe
+most_frustrating_offline_2: Telling the difference between different brands of running shoes
+most_frustrating_offline_3: Finding a product that matches my personal needs
+most_frustrating_offline_4: Telling the difference between products at different price points
+most_frustrating_offline_5: Poor product knowledge from staff
+most_frustrating_offline_6: Unclear shoe displays
+most_frustrating_offline_7: Unclear where to find running shoe section
+most_frustrating_offline_8: No system/tool to choose the right shoe
+most_frustrating_offline_9: Identifying running shoes vs. sports shoes
+most_frustrating_offline_10: Limited selection of products
+most_frustrating_offline_11: Too many options to choose between
+most_frustrating_offline_12: No frustrations
+most_frustrating_offline_13: Other
+
+## Q18: When shopping for running shoes in-store, I prefer to get help and advice from a member of staff
+
+need_expert_advice: Strongly Agree, Agree, Neither agree nor disagree, Disagree, Strongly Disagree
